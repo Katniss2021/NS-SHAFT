@@ -882,19 +882,13 @@
       const rows = sprite.length;
       const px = w / cols;
       const py = h / rows;
-      if (invert) {
-        ctx.fillStyle = pal.fg;
-        ctx.fillRect(x, y, w, h);
-      }
+      const mainColor = invert ? pal.dark : pal.fg;
+      const accentColor = invert ? pal.bg : pal.light;
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
           const ch = sprite[r][c];
           if (ch === " ") continue;
-          if (invert) {
-            ctx.fillStyle = pal.bg;
-          } else {
-            ctx.fillStyle = ch === "." ? pal.light : pal.fg;
-          }
+          ctx.fillStyle = ch === "." ? accentColor : mainColor;
           ctx.fillRect(x + c * px, y + r * py, Math.ceil(px), Math.ceil(py));
         }
       }
