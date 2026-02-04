@@ -19,6 +19,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      overscroll-behavior: none;
     }
     #wrap {
       width: 100%;
@@ -40,6 +41,12 @@
       box-sizing: border-box;
       gap: 12px;
       flex-wrap: wrap;
+    }
+    #hud-logo {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
     }
     #hp {
       display: flex;
@@ -76,6 +83,51 @@
       background: #0b0d14;
       padding: 6px;
       max-width: 96vw;
+      position: relative;
+    }
+    #start-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 10px 18px;
+      font-size: 16px;
+      letter-spacing: 1px;
+      background: #1f2435;
+      color: #f6f1e6;
+      border: 2px solid #6b7390;
+      cursor: pointer;
+      z-index: 2;
+    }
+    #start-btn.hidden {
+      display: none;
+    }
+    #game {
+      touch-action: none;
+    }
+    #controls {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 16px;
+      pointer-events: none;
+    }
+    .ctrl-btn {
+      pointer-events: auto;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(31, 36, 53, 0.85);
+      border: 2px solid #6b7390;
+      color: #f6f1e6;
+      font-size: 20px;
+      display: grid;
+      place-items: center;
+      user-select: none;
+      touch-action: none;
     }
     canvas {
       background: #0f1118;
@@ -94,9 +146,15 @@
         <div id="hearts"></div>
       </div>
       <div id="floor">FLOOR: 0</div>
+      <img id="hud-logo" src="logo.png" alt="Logo" />
     </div>
     <div id="game-box">
+      <button id="start-btn" type="button">START</button>
       <canvas id="game" width="480" height="720" aria-label="NS-SHAFT"></canvas>
+      <div id="controls">
+        <button class="ctrl-btn" id="btn-left" type="button">◀</button>
+        <button class="ctrl-btn" id="btn-right" type="button">▶</button>
+      </div>
     </div>
   </div>
 
@@ -106,6 +164,11 @@
     const floorEl = document.getElementById("floor");
     const heartsEl = document.getElementById("hearts");
     const hpFillEl = document.getElementById("hp-fill");
+    const startBtn = document.getElementById("start-btn");
+    const gameBox = document.getElementById("game-box");
+    const btnLeft = document.getElementById("btn-left");
+    const btnRight = document.getElementById("btn-right");
+
 
     const WORLD = {
       width: 360,
@@ -271,9 +334,12 @@
 
       if (state.mode !== "playing") return;
 
-      const gravity = 700;
+      let gravity = 700;
+      if (state.player.vy > 0 && state.player.y > state.cameraY + WORLD.height * 0.65) {
+        gravity += 220;
+      }
       state.player.vy += gravity * dt;
-      if (state.player.vy > 900) state.player.vy = 900;
+      if (state.player.vy > 1100) state.player.vy = 1100;
 
       const wasY = state.player.y;
       const wasX = state.player.x;
@@ -451,6 +517,7 @@
 
       ctx.fillStyle = "#0d111c";
       ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+
 
       const ceilingY = state.spikeCeilingY - state.cameraY;
       ctx.fillStyle = "#7a1c1c";
@@ -646,6 +713,14 @@
           heartsEl.appendChild(heart);
         }
       }
+      if (startBtn) {
+        if (state.mode === "playing") {
+          startBtn.classList.add("hidden");
+        } else {
+          startBtn.classList.remove("hidden");
+          startBtn.textContent = state.mode === "gameover" ? "REPLAY" : "START";
+        }
+      }
     }
 
     function drawPlayerPixel(x, y, w, h, hurt) {
@@ -792,6 +867,69 @@
     document.addEventListener("keyup", (e) => {
       state.keys.delete(e.code);
     });
+
+    if (startBtn) {
+      startBtn.addEventListener("click", () => {
+        ensureAudio();
+        state.mode = "playing";
+        resetGame();
+        playSfx("start");
+        updateHud();
+      });
+    }
+
+    function setKey(code, down) {
+      if (down) state.keys.add(code);
+      else state.keys.delete(code);
+    }
+
+    if (btnLeft) {
+      btnLeft.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        setKey("ArrowLeft", true);
+      });
+      btnLeft.addEventListener("pointerup", () => setKey("ArrowLeft", false));
+      btnLeft.addEventListener("pointerleave", () => setKey("ArrowLeft", false));
+    }
+
+    if (btnRight) {
+      btnRight.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        setKey("ArrowRight", true);
+      });
+      btnRight.addEventListener("pointerup", () => setKey("ArrowRight", false));
+      btnRight.addEventListener("pointerleave", () => setKey("ArrowRight", false));
+    }
+
+    let swipeStartX = null;
+    if (canvas) {
+      canvas.addEventListener("touchstart", (e) => {
+        if (e.touches.length > 0) {
+          swipeStartX = e.touches[0].clientX;
+        }
+      }, { passive: true });
+      canvas.addEventListener("touchmove", (e) => {
+        if (swipeStartX == null || e.touches.length === 0) return;
+        const dx = e.touches[0].clientX - swipeStartX;
+        if (Math.abs(dx) < 8) return;
+        if (dx > 0) {
+          setKey("ArrowRight", true);
+          setKey("ArrowLeft", false);
+        } else {
+          setKey("ArrowLeft", true);
+          setKey("ArrowRight", false);
+        }
+      }, { passive: true });
+      canvas.addEventListener("touchend", () => {
+        swipeStartX = null;
+        setKey("ArrowLeft", false);
+        setKey("ArrowRight", false);
+      }, { passive: true });
+    }
+
+    if (gameBox) {
+      gameBox.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
+    }
 
     function toggleFullscreen() {
       if (!document.fullscreenElement) {
