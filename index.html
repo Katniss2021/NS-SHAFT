@@ -1,28 +1,32 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>NS-SHAFT Tribute</title>
-  <meta name="theme-color" content="#0b0d14" />
+  <title>是男人就下100层</title>
+  <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="NS-SHAFT" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="是男人就下100层" />
   <link rel="icon" href="logo.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="logo.png" />
   <link rel="manifest" href="manifest.json" />
   <style>
     :root {
-      color-scheme: light;
+      --c-bg: #000000;
+      --c-fg: #ffffff;
+      --c-dark: #303030;
+      --c-mid: #707070;
+      --c-light: #c0c0c0;
     }
     html, body {
       margin: 0;
       padding: 0;
       width: 100%;
       height: 100%;
-      background: radial-gradient(circle at top, #1d2130 0%, #0b0d14 55%, #05060a 100%);
+      background: var(--c-bg);
+      color: var(--c-fg);
       font-family: "Courier New", "Menlo", "Monaco", monospace;
-      color: #f6f1e6;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -35,7 +39,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 14px;
+      gap: 10px;
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
       box-sizing: border-box;
     }
@@ -44,60 +48,54 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 18px;
+      font-size: 16px;
       letter-spacing: 0.5px;
       padding: 0 6px;
       box-sizing: border-box;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
-    }
-    #hud-logo {
-      width: clamp(40px, 9vw, 56px);
-      height: clamp(40px, 9vw, 56px);
-      object-fit: contain;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
     }
     #hp {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
-    #difficulty {
-      background: #1f2435;
-      color: #f6f1e6;
-      border: 1px solid #3a435a;
-      padding: 4px 8px;
-      font-size: 14px;
+    #hp-label {
+      min-width: 90px;
     }
     #hp-bar {
-      width: clamp(120px, 30vw, 180px);
-      height: 14px;
-      background: #1f2435;
-      border: 1px solid #3a435a;
-      position: relative;
+      width: clamp(120px, 28vw, 180px);
+      height: 12px;
+      background: var(--c-dark);
+      border: 1px solid var(--c-mid);
+      box-sizing: border-box;
     }
     #hp-fill {
       height: 100%;
       width: 100%;
-      background: #7bdcff;
+      background: var(--c-fg);
     }
-    #hearts {
+    #mode-block {
       display: flex;
-      gap: 4px;
+      align-items: center;
+      gap: 6px;
     }
-    .heart {
-      width: 10px;
-      height: 10px;
-      background: #ff6b6b;
-      clip-path: polygon(50% 90%, 100% 45%, 80% 10%, 50% 25%, 20% 10%, 0% 45%);
+    #difficulty {
+      background: var(--c-bg);
+      color: var(--c-fg);
+      border: 1px solid var(--c-mid);
+      padding: 2px 6px;
+      font-size: 14px;
+    }
+    #hud-logo {
+      width: clamp(36px, 8vw, 50px);
+      height: clamp(36px, 8vw, 50px);
+      object-fit: contain;
     }
     #game-box {
-      border: 3px solid #394055;
-      box-shadow:
-        0 10px 30px rgba(0,0,0,0.55),
-        0 0 0 5px rgba(15, 18, 26, 0.7);
-      background: #0b0d14;
-      padding: 6px;
+      border: 2px solid var(--c-mid);
+      background: var(--c-bg);
+      padding: 4px;
       max-width: 96vw;
       position: relative;
     }
@@ -106,12 +104,12 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      padding: 10px 18px;
-      font-size: 16px;
+      padding: 8px 14px;
+      font-size: 14px;
       letter-spacing: 1px;
-      background: #1f2435;
-      color: #f6f1e6;
-      border: 2px solid #6b7390;
+      background: var(--c-bg);
+      color: var(--c-fg);
+      border: 1px solid var(--c-fg);
       cursor: pointer;
       z-index: 2;
     }
@@ -125,10 +123,10 @@
       position: absolute;
       left: 0;
       right: 0;
-      bottom: 8px;
+      bottom: 6px;
       display: flex;
       justify-content: space-between;
-      padding: 0 16px;
+      padding: 0 14px;
       pointer-events: none;
       user-select: none;
       -webkit-user-select: none;
@@ -136,13 +134,13 @@
     }
     .ctrl-btn {
       pointer-events: auto;
-      width: 64px;
-      height: 64px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
-      background: rgba(31, 36, 53, 0.85);
-      border: 2px solid #6b7390;
-      color: #f6f1e6;
-      font-size: 20px;
+      background: var(--c-bg);
+      border: 1px solid var(--c-fg);
+      color: var(--c-fg);
+      font-size: 18px;
       display: grid;
       place-items: center;
       user-select: none;
@@ -152,9 +150,8 @@
       outline: none;
     }
     canvas {
-      background: #0f1118;
+      background: var(--c-bg);
       border: none;
-      box-shadow: none;
       image-rendering: pixelated;
     }
   </style>
@@ -163,11 +160,10 @@
   <div id="wrap">
     <div id="hud">
       <div id="hp">
-        <span class="label">HP</span>
+        <span id="hp-label">HP 15/15</span>
         <div id="hp-bar"><div id="hp-fill"></div></div>
-        <div id="hearts"></div>
       </div>
-      <div>
+      <div id="mode-block">
         <label for="difficulty">MODE</label>
         <select id="difficulty">
           <option value="easy">E</option>
@@ -175,12 +171,12 @@
           <option value="hard">H</option>
         </select>
       </div>
-      <div id="floor">FLOOR: 0</div>
+      <div id="floor">地下: 0</div>
       <img id="hud-logo" src="logo.png?v=2" alt="Logo" />
     </div>
     <div id="game-box">
-      <button id="start-btn" type="button">START</button>
-      <canvas id="game" width="480" height="640" aria-label="NS-SHAFT"></canvas>
+      <button id="start-btn" type="button">开始</button>
+      <canvas id="game" width="480" height="640" aria-label="是男人就下100层"></canvas>
       <div id="controls">
         <button class="ctrl-btn" id="btn-left" type="button">◀</button>
         <button class="ctrl-btn" id="btn-right" type="button">▶</button>
@@ -189,75 +185,118 @@
   </div>
 
   <script>
+    // Original name: NS-SHAFT (NAGI-P SOFT). UI uses the Chinese title only.
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     const floorEl = document.getElementById("floor");
-    const heartsEl = document.getElementById("hearts");
     const hpFillEl = document.getElementById("hp-fill");
+    const hpLabelEl = document.getElementById("hp-label");
     const startBtn = document.getElementById("start-btn");
     const gameBox = document.getElementById("game-box");
     const btnLeft = document.getElementById("btn-left");
     const btnRight = document.getElementById("btn-right");
     const difficultyEl = document.getElementById("difficulty");
-    const TUNE = {
-      maxLives: 15,
-      damageSpike: 3,
-      healNormal: 1,
-      bottomDeathOffset: 80,
-      gravityBase: 700,
-      gravityAirAccel: 200,
-      gravityAirAccelMax: 520,
-      gravityLowBoost: 260,
-      terminalVy: 1150,
-      ceilingPushDown: 6,
-      ceilingMinVy: 120,
-      gapEasyAdjust: -8,
-      gapHardAdjust: 10,
-      scrollSpeeds: { easy: 50, normal: 75, hard: 100 },
-      conveyorSpeeds: { easy: 55, normal: 70, hard: 80 },
-      invuln: { easy: 1.5, normal: 1.3, hard: 1.1 },
-    };
 
+    const CONFIG = {
+      title: "是男人就下100层",
+      palette: {
+        ink: {
+          bg: "#000000",
+          fg: "#ffffff",
+          dark: "#303030",
+          mid: "#707070",
+          light: "#c0c0c0",
+        },
+        bw: {
+          bg: "#000000",
+          fg: "#ffffff",
+          dark: "#000000",
+          mid: "#ffffff",
+          light: "#ffffff",
+        },
+        color: {
+          bg: "#0b0d14",
+          fg: "#f6f1e6",
+          dark: "#1f2435",
+          mid: "#6b7390",
+          light: "#c0c0c0",
+          normal: "#f2c14e",
+          fragile: "#f08a5d",
+          conveyor: "#4ecca3",
+          spike: "#ff6b6b",
+          spring: "#7bdcff",
+        },
+      },
+      boot: {
+        blackMs: 300,
+        lineDelayMs: 240,
+        titleBlinkCount: 2,
+        titleBlinkIntervalMs: 220,
+        promptBlinkMs: 400,
+        lines: [
+          "WQX System Booting...",
+          "Memory Check: OK",
+          "Input Device: Ready",
+        ],
+      },
+      win: {
+        floor: 100,
+        holdMs: 3000,
+      },
+      tune: {
+        maxLives: 15,
+        damageSpike: 3,
+        healNormal: 1,
+        bottomDeathOffset: 80,
+        gravityBase: 700,
+        gravityAirAccel: 200,
+        gravityAirAccelMax: 520,
+        gravityLowBoost: 260,
+        terminalVy: 1150,
+        ceilingPushDown: 6,
+        ceilingMinVy: 120,
+        gapEasyAdjust: -8,
+        gapHardAdjust: 10,
+        scrollSpeeds: { easy: 50, normal: 75, hard: 100 },
+        conveyorSpeeds: { easy: 55, normal: 70, hard: 80 },
+        invuln: { easy: 1.5, normal: 1.3, hard: 1.1 },
+      spikeSpeeds: { easy: 0, normal: 0, hard: 0 },
+      },
+    };
 
     const WORLD = {
       width: 360,
       height: 560,
     };
 
-    const COLORS = {
-      normal: "#f2c14e",
-      fragile: "#f08a5d",
-      conveyor: "#4ecca3",
-      spike: "#ff6b6b",
-      spring: "#7bdcff",
-    };
-
     const state = {
-      mode: "title",
+      mode: "boot",
       difficulty: "normal",
+      displayMode: loadSetting("wqx-display", "ink"),
+      bwMode: loadSetting("wqx-bw", "0") === "1",
       time: 0,
+      clock: 0,
+      bootStartMs: performance.now(),
+      bootReady: false,
+      winTimer: 0,
       floor: 0,
-      lives: TUNE.maxLives,
-      maxLives: TUNE.maxLives,
+      lives: CONFIG.tune.maxLives,
+      maxLives: CONFIG.tune.maxLives,
       cameraY: 0,
       scrollOffset: 0,
       spikeCeilingY: 0,
       spikeOffset: -10,
-      spikeSpeed: 0,
+      spikeSpeed: CONFIG.tune.spikeSpeeds.normal,
       invuln: 0,
-      invulnDuration: 1.3,
-      conveyorSpeed: 70,
-      scrollSpeed: TUNE.scrollSpeeds.normal,
-      sfx: null,
+      invulnDuration: CONFIG.tune.invuln.normal,
+      conveyorSpeed: CONFIG.tune.conveyorSpeeds.normal,
+      scrollSpeed: CONFIG.tune.scrollSpeeds.normal,
       platforms: [],
       nextPlatformY: 0,
       airTime: 0,
       wasGrounded: false,
-      spawn: {
-        lastX: 160,
-        lastType: "normal",
-        specialStreak: 0,
-      },
+      keys: new Set(),
+      sfx: null,
       player: {
         x: 160,
         y: 80,
@@ -268,11 +307,13 @@
         speed: 160,
         airControl: 0.8,
       },
-      keys: new Set(),
     };
 
+    applyPalette();
+    ctx.imageSmoothingEnabled = false;
+
     function resize() {
-      const padding = 24;
+      const padding = 20;
       const hudReserve = 72;
       const maxW = Math.max(320, window.innerWidth - padding * 2);
       const maxH = Math.max(320, window.innerHeight - padding * 2 - hudReserve);
@@ -290,6 +331,69 @@
     window.addEventListener("resize", resize);
     resize();
 
+    function loadSetting(key, fallback) {
+      try {
+        const value = localStorage.getItem(key);
+        return value === null ? fallback : value;
+      } catch (err) {
+        return fallback;
+      }
+    }
+
+    function saveSetting(key, value) {
+      try {
+        localStorage.setItem(key, value);
+      } catch (err) {
+        // ignore
+      }
+    }
+
+    function getPalette() {
+      if (state.bwMode) return CONFIG.palette.bw;
+      if (state.displayMode === "color") return CONFIG.palette.color;
+      return CONFIG.palette.ink;
+    }
+
+    function applyPalette() {
+      const pal = getPalette();
+      document.documentElement.style.setProperty("--c-bg", pal.bg);
+      document.documentElement.style.setProperty("--c-fg", pal.fg);
+      document.documentElement.style.setProperty("--c-dark", pal.dark);
+      document.documentElement.style.setProperty("--c-mid", pal.mid);
+      document.documentElement.style.setProperty("--c-light", pal.light);
+    }
+
+    function toggleDisplayMode() {
+      state.displayMode = state.displayMode === "color" ? "ink" : "color";
+      saveSetting("wqx-display", state.displayMode);
+      applyPalette();
+    }
+
+    function toggleBwMode() {
+      state.bwMode = !state.bwMode;
+      saveSetting("wqx-bw", state.bwMode ? "1" : "0");
+      applyPalette();
+    }
+
+    function updateDifficulty() {
+      if (state.difficulty === "easy") {
+        state.scrollSpeed = CONFIG.tune.scrollSpeeds.easy;
+        state.conveyorSpeed = CONFIG.tune.conveyorSpeeds.easy;
+        state.invulnDuration = CONFIG.tune.invuln.easy;
+        state.spikeSpeed = CONFIG.tune.spikeSpeeds.easy;
+      } else if (state.difficulty === "hard") {
+        state.scrollSpeed = CONFIG.tune.scrollSpeeds.hard;
+        state.conveyorSpeed = CONFIG.tune.conveyorSpeeds.hard;
+        state.invulnDuration = CONFIG.tune.invuln.hard;
+        state.spikeSpeed = CONFIG.tune.spikeSpeeds.hard;
+      } else {
+        state.scrollSpeed = CONFIG.tune.scrollSpeeds.normal;
+        state.conveyorSpeed = CONFIG.tune.conveyorSpeeds.normal;
+        state.invulnDuration = CONFIG.tune.invuln.normal;
+        state.spikeSpeed = CONFIG.tune.spikeSpeeds.normal;
+      }
+    }
+
     function resetGame() {
       state.time = 0;
       state.floor = 0;
@@ -297,24 +401,23 @@
       state.invuln = 0;
       state.cameraY = 0;
       state.scrollOffset = 0;
+      state.spikeOffset = -10;
+      state.spikeCeilingY = state.cameraY + state.spikeOffset;
       state.player.x = WORLD.width * 0.5 - state.player.w / 2;
       state.player.y = 60;
       state.player.vx = 0;
       state.player.vy = 40;
       state.platforms = [];
       state.nextPlatformY = 120;
-      state.spikeOffset = -10;
-      state.spikeCeilingY = state.cameraY + state.spikeOffset;
-      state.spawn.lastX = state.player.x;
-      state.spawn.lastType = "normal";
-      state.spawn.specialStreak = 0;
+      state.airTime = 0;
+      state.wasGrounded = false;
       seedPlatforms();
       updateDifficulty();
+      updateHud();
     }
 
     function seedPlatforms() {
-      const spawnAnchor = Math.max(state.cameraY, state.player.y);
-      while (state.nextPlatformY < spawnAnchor + WORLD.height + 800) {
+      while (state.nextPlatformY < state.cameraY + WORLD.height + 800) {
         spawnPlatform(state.nextPlatformY);
         state.nextPlatformY += nextGap(state.nextPlatformY);
       }
@@ -324,12 +427,43 @@
       return min + Math.random() * (max - min);
     }
 
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function nextGap(y) {
+      const depth = Math.max(0, Math.floor((y - 60) / 120));
+      let base = depth < 4 ? randRange(70, 100) : randRange(80, 115);
+      if (state.difficulty === "easy") base += CONFIG.tune.gapEasyAdjust;
+      if (state.difficulty === "hard") base += CONFIG.tune.gapHardAdjust;
+      const bonus = Math.min(18, depth * 1.2);
+      return base + bonus;
+    }
+
+    function choosePlatformType(depth) {
+      const roll = Math.random();
+      const hard = state.difficulty === "hard";
+      const easy = state.difficulty === "easy";
+      if (depth < 2) {
+        return roll < (easy ? 0.85 : 0.75) ? "normal" : "fragile";
+      }
+      if (depth < 6) {
+        if (roll < (easy ? 0.7 : hard ? 0.5 : 0.6)) return "normal";
+        if (roll < (easy ? 0.86 : hard ? 0.74 : 0.78)) return "fragile";
+        if (roll < (easy ? 0.94 : hard ? 0.88 : 0.9)) return "conveyor";
+        if (roll < (easy ? 0.98 : hard ? 0.93 : 0.96)) return "spring";
+        return "spike";
+      }
+      if (roll < (easy ? 0.65 : hard ? 0.45 : 0.55)) return "normal";
+      if (roll < (easy ? 0.82 : hard ? 0.7 : 0.74)) return "fragile";
+      if (roll < (easy ? 0.92 : hard ? 0.85 : 0.88)) return "conveyor";
+      if (roll < (easy ? 0.97 : hard ? 0.91 : 0.95)) return "spring";
+      return "spike";
+    }
+
     function spawnPlatform(y) {
       const depth = Math.max(0, Math.floor((y - 60) / 120));
       let type = choosePlatformType(depth);
-      if (state.spawn.specialStreak >= 1 && type !== "normal") {
-        type = "normal";
-      }
       if (depth < 2 && (type === "spike" || type === "conveyor" || type === "spring")) {
         type = "normal";
       }
@@ -343,10 +477,7 @@
       const margin = 18;
       const minX = margin;
       const maxX = WORLD.width - width - margin;
-      let x = clamp(state.spawn.lastX + randRange(-140, 140), minX, maxX);
-      if (Math.abs(x - state.spawn.lastX) > 150) {
-        x = clamp(state.spawn.lastX + (x > state.spawn.lastX ? 150 : -150), minX, maxX);
-      }
+      let x = clamp(randRange(minX, maxX), minX, maxX);
 
       const platform = {
         x,
@@ -362,9 +493,6 @@
         springPower: type === "spring" ? randRange(320, 380) : 0,
       };
       state.platforms.push(platform);
-      state.spawn.lastX = x;
-      state.spawn.lastType = type;
-      state.spawn.specialStreak = type === "normal" ? 0 : state.spawn.specialStreak + 1;
     }
 
     function applyInput(dt, grounded) {
@@ -388,17 +516,16 @@
 
       if (state.mode !== "playing") return;
 
-      const drift = state.scrollSpeed * dt;
-      state.scrollOffset += drift;
+      state.scrollOffset += state.scrollSpeed * dt;
       state.cameraY = state.scrollOffset;
 
       state.airTime += dt;
-      let gravity = TUNE.gravityBase + Math.min(TUNE.gravityAirAccelMax, state.airTime * TUNE.gravityAirAccel);
+      let gravity = CONFIG.tune.gravityBase + Math.min(CONFIG.tune.gravityAirAccelMax, state.airTime * CONFIG.tune.gravityAirAccel);
       if (state.player.vy > 0 && state.player.y > state.cameraY + WORLD.height * 0.6) {
-        gravity += TUNE.gravityLowBoost;
+        gravity += CONFIG.tune.gravityLowBoost;
       }
       state.player.vy += gravity * dt;
-      if (state.player.vy > TUNE.terminalVy) state.player.vy = TUNE.terminalVy;
+      if (state.player.vy > CONFIG.tune.terminalVy) state.player.vy = CONFIG.tune.terminalVy;
 
       const wasY = state.player.y;
       const wasX = state.player.x;
@@ -416,7 +543,6 @@
       }
 
       let grounded = false;
-      let groundedPlatform = null;
       let landedNormal = false;
       for (const p of state.platforms) {
         if ((p.used && p.type === "fragile") || p.breaking) continue;
@@ -447,9 +573,7 @@
             grounded = false;
             break;
           }
-
           grounded = true;
-          groundedPlatform = p;
           landedNormal = p.type === "normal";
           state.player.y = p.y - state.player.h;
           state.player.vy = 0;
@@ -476,7 +600,7 @@
 
       const justLanded = grounded && !state.wasGrounded;
       if (justLanded && landedNormal && state.lives < state.maxLives) {
-        state.lives = Math.min(state.maxLives, state.lives + TUNE.healNormal);
+        state.lives = Math.min(state.maxLives, state.lives + CONFIG.tune.healNormal);
       }
 
       // Side collision to prevent sliding into wall gaps at platform edges.
@@ -499,12 +623,13 @@
 
       applyInput(dt, grounded);
 
+      state.spikeOffset += state.spikeSpeed * dt;
       state.spikeCeilingY = state.cameraY + state.spikeOffset;
       const ceilingBottom = state.spikeCeilingY + 26;
       if (state.player.y <= ceilingBottom) {
         hurtPlayer();
-        state.player.y = ceilingBottom + TUNE.ceilingPushDown;
-        state.player.vy = Math.max(TUNE.ceilingMinVy, state.player.vy);
+        state.player.y = ceilingBottom + CONFIG.tune.ceilingPushDown;
+        state.player.vy = Math.max(CONFIG.tune.ceilingMinVy, state.player.vy);
       }
 
       if (state.invuln > 0) {
@@ -515,8 +640,13 @@
       const depth = Math.max(0, state.player.y - 60);
       state.floor = Math.floor(depth / 120);
 
+      if (state.floor >= CONFIG.win.floor) {
+        state.mode = "win";
+        state.winTimer = 0;
+      }
 
-      while (state.nextPlatformY < state.cameraY + WORLD.height + 800) {
+      const spawnAnchor = Math.max(state.cameraY, state.player.y);
+      while (state.nextPlatformY < spawnAnchor + WORLD.height + 800) {
         spawnPlatform(state.nextPlatformY);
         state.nextPlatformY += nextGap(state.nextPlatformY);
       }
@@ -539,19 +669,25 @@
       const keepMax = Math.max(state.cameraY, state.player.y) + WORLD.height + 800;
       state.platforms = state.platforms.filter(p => p.y > keepMin && p.y < keepMax);
 
-      if (state.player.y > state.cameraY + WORLD.height + TUNE.bottomDeathOffset) {
+      if (state.player.y > state.cameraY + WORLD.height + CONFIG.tune.bottomDeathOffset) {
         state.lives = 0;
         state.mode = "gameover";
         playSfx("gameover");
       }
 
       state.wasGrounded = grounded;
+    }
 
+    function updateWin(dt) {
+      state.winTimer += dt * 1000;
+      if (state.winTimer >= CONFIG.win.holdMs) {
+        state.mode = "title";
+      }
     }
 
     function hurtPlayer() {
       if (state.invuln > 0) return;
-      state.lives -= TUNE.damageSpike;
+      state.lives -= CONFIG.tune.damageSpike;
       if (state.lives < 0) state.lives = 0;
       state.invuln = state.invulnDuration;
       playSfx("hurt");
@@ -562,44 +698,71 @@
     }
 
     function drawBackground() {
-      const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      g.addColorStop(0, "#1f2333");
-      g.addColorStop(0.6, "#0f1220");
-      g.addColorStop(1, "#07080f");
-      ctx.fillStyle = g;
+      const pal = getPalette();
+      ctx.fillStyle = pal.bg;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.save();
-      ctx.globalAlpha = 0.2;
-      const starOffset = (state.scrollOffset * 20) % canvas.height;
-      for (let i = 0; i < 60; i++) {
-        const x = (i * 37) % canvas.width;
-        const y = ((i * 83) + starOffset) % canvas.height;
-        ctx.fillStyle = i % 3 === 0 ? "#5c6b8b" : "#9fb2d0";
-        ctx.fillRect(x, y, 1, 1);
+      // Dot matrix grid
+      ctx.fillStyle = pal.dark;
+      for (let y = 0; y < canvas.height; y += 8) {
+        for (let x = 0; x < canvas.width; x += 8) {
+          ctx.fillRect(x, y, 1, 1);
+        }
       }
-      ctx.restore();
     }
 
-    function draw() {
-      drawBackground();
+    function drawBoot() {
+      const pal = getPalette();
+      ctx.fillStyle = pal.bg;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const scale = Math.min(canvas.width / WORLD.width, canvas.height / WORLD.height);
-      const offsetX = (canvas.width - WORLD.width * scale) / 2;
-      const offsetY = (canvas.height - WORLD.height * scale) / 2;
+      const now = performance.now();
+      const elapsed = now - state.bootStartMs;
+      if (elapsed < CONFIG.boot.blackMs) return;
 
-      ctx.save();
-      ctx.translate(offsetX, offsetY);
-      ctx.scale(scale, scale);
+      const lineStart = CONFIG.boot.blackMs;
+      const linesShown = Math.min(
+        CONFIG.boot.lines.length,
+        Math.floor((elapsed - lineStart) / CONFIG.boot.lineDelayMs) + 1
+      );
 
-      ctx.fillStyle = "#0d111c";
-      ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+      ctx.fillStyle = pal.fg;
+      ctx.font = "16px \"Courier New\", monospace";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      let y = canvas.height * 0.25;
+      for (let i = 0; i < linesShown; i++) {
+        ctx.fillText(CONFIG.boot.lines[i], canvas.width * 0.12, y);
+        y += 22;
+      }
 
+      const titleStart = lineStart + CONFIG.boot.lines.length * CONFIG.boot.lineDelayMs + 120;
+      const titleBlinkTotal = CONFIG.boot.titleBlinkCount * 2;
+      const titlePhase = Math.floor((elapsed - titleStart) / CONFIG.boot.titleBlinkIntervalMs);
+      const titleVisible = elapsed >= titleStart && titlePhase < titleBlinkTotal ? titlePhase % 2 === 0 : elapsed >= titleStart + titleBlinkTotal * CONFIG.boot.titleBlinkIntervalMs;
 
+      if (titleVisible) {
+        ctx.textAlign = "center";
+        ctx.font = "18px \"Courier New\", monospace";
+        ctx.fillText(CONFIG.title, canvas.width / 2, canvas.height * 0.5);
+      }
+
+      const promptStart = titleStart + titleBlinkTotal * CONFIG.boot.titleBlinkIntervalMs + 200;
+      if (elapsed >= promptStart) {
+        const blink = Math.floor((elapsed - promptStart) / CONFIG.boot.promptBlinkMs) % 2 === 0;
+        if (blink) {
+          ctx.font = "14px \"Courier New\", monospace";
+          ctx.fillText("Press Any Key", canvas.width / 2, canvas.height * 0.62);
+        }
+        state.bootReady = true;
+      }
+    }
+
+    function drawCeiling(pal) {
       const ceilingY = state.spikeCeilingY - state.cameraY;
-      ctx.fillStyle = "#7a1c1c";
+      ctx.fillStyle = pal.dark;
       ctx.fillRect(0, ceilingY, WORLD.width, 10);
-      ctx.fillStyle = "#ff7b7b";
+      ctx.fillStyle = pal.fg;
       for (let i = 0; i < WORLD.width; i += 16) {
         ctx.beginPath();
         ctx.moveTo(i, ceilingY + 10);
@@ -608,222 +771,107 @@
         ctx.closePath();
         ctx.fill();
       }
-      ctx.fillStyle = "#3b0f10";
-      ctx.fillRect(0, ceilingY - 14, WORLD.width, 6);
-      ctx.fillStyle = "#2a0b0b";
-      ctx.fillRect(0, ceilingY + 24, WORLD.width, 2);
+    }
 
-      for (const p of state.platforms) {
-        if (p.used && p.type === "fragile" && p.fallV <= 0) continue;
-        const y = p.y - state.cameraY;
-        if (p.breaking) {
-          ctx.globalAlpha = 0.7;
-        } else {
-          ctx.globalAlpha = 1;
-        }
-        ctx.fillStyle = COLORS[p.type];
+    function drawPlatform(p, pal) {
+      const y = p.y - state.cameraY;
+      ctx.strokeStyle = pal.mid;
+      ctx.lineWidth = 1;
+
+      if (p.type === "normal") {
+        ctx.fillStyle = pal.light;
         ctx.fillRect(p.x, y, p.w, p.h);
-        ctx.strokeStyle = "rgba(0,0,0,0.4)";
         ctx.strokeRect(p.x, y, p.w, p.h);
-        ctx.globalAlpha = 1;
-        if (p.type === "conveyor") {
-          ctx.fillStyle = "rgba(0,0,0,0.35)";
-          for (let i = 8; i < p.w - 6; i += 16) {
-            ctx.beginPath();
-            if (p.conveyor > 0) {
-              ctx.moveTo(p.x + i, y + 4);
-              ctx.lineTo(p.x + i + 8, y + 6);
-              ctx.lineTo(p.x + i, y + 8);
-            } else {
-              ctx.moveTo(p.x + i + 8, y + 4);
-              ctx.lineTo(p.x + i, y + 6);
-              ctx.lineTo(p.x + i + 8, y + 8);
-            }
-            ctx.closePath();
-            ctx.fill();
-          }
-        }
-        if (p.type === "spike") {
-          ctx.fillStyle = "#1a1a1a";
-          const spikeTop = y - 6;
-          for (let i = 0; i < p.w; i += 10) {
-            ctx.beginPath();
-            ctx.moveTo(p.x + i, y);
-            ctx.lineTo(p.x + i + 5, spikeTop);
-            ctx.lineTo(p.x + i + 10, y);
-            ctx.fill();
-          }
-          ctx.fillStyle = "#851b1b";
-          ctx.fillRect(p.x, y + p.h - 2, p.w, 2);
-        }
-        if (p.type === "spring") {
-          ctx.fillStyle = "#0b3550";
-          ctx.fillRect(p.x + p.w * 0.35, y - 8, p.w * 0.3, 8);
-          ctx.strokeStyle = "#7bdcff";
-          ctx.lineWidth = 2;
+      } else if (p.type === "fragile") {
+        ctx.fillStyle = pal.light;
+        ctx.fillRect(p.x, y, p.w, p.h);
+        ctx.strokeRect(p.x, y, p.w, p.h);
+        ctx.strokeStyle = pal.dark;
+        // aligned hatch marks for fragile platforms
+        for (let i = 2; i < p.w; i += 6) {
           ctx.beginPath();
-          const left = p.x + p.w * 0.35;
-          const right = p.x + p.w * 0.65;
-          const top = y - 8;
-          ctx.moveTo(left, top);
-          ctx.lineTo(right, top + 4);
-          ctx.lineTo(left, top + 8);
+          ctx.moveTo(p.x + i, y + 2);
+          ctx.lineTo(p.x + i, y + p.h - 2);
           ctx.stroke();
-          ctx.lineWidth = 1;
         }
-      }
-
-      drawPlayerPixel(state.player.x, state.player.y - state.cameraY, state.player.w, state.player.h, state.invuln > 0);
-
-      ctx.restore();
-
-      if (state.mode === "title") {
-        drawCenteredText([
-          "NS-SHAFT",
-          "TRIBUTE",
-          "PRESS ENTER",
-          "ARROWS / A-D TO MOVE",
-          "F FULLSCREEN",
-        ], 0.42);
-      }
-      if (state.mode === "gameover") {
-        drawCenteredText([
-          "GAME OVER",
-          `FLOOR ${state.floor}`,
-        ], 0.32);
-      }
-
-      if (state.invuln > 0) {
-        ctx.save();
-        ctx.globalAlpha = Math.min(0.35, state.invuln * 0.35);
-        ctx.fillStyle = "#b93131";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.restore();
-      }
-
-      updateHud();
-    }
-
-    function drawCenteredText(lines, anchor) {
-      ctx.save();
-      ctx.textAlign = "center";
-      ctx.fillStyle = "#f6f1e6";
-      ctx.font = "22px \"Courier New\", monospace";
-      const startY = canvas.height * anchor;
-      lines.forEach((line, idx) => {
-        ctx.fillText(line, canvas.width / 2, startY + idx * 26);
-      });
-      ctx.restore();
-    }
-
-    function gameLoop(lastTime) {
-      return function tick(ts) {
-        const delta = (ts - lastTime) / 1000;
-        lastTime = ts;
-        if (!useExternalAdvance) {
-          const dt = Math.min(0.033, delta);
-          update(dt);
-          draw();
+      } else if (p.type === "conveyor") {
+        ctx.fillStyle = pal.mid;
+        ctx.fillRect(p.x, y, p.w, p.h);
+        ctx.strokeRect(p.x, y, p.w, p.h);
+        ctx.strokeStyle = pal.fg;
+        for (let i = 6; i < p.w - 6; i += 14) {
+          ctx.beginPath();
+          if (p.conveyor > 0) {
+            ctx.moveTo(p.x + i, y + 4);
+            ctx.lineTo(p.x + i + 6, y + 6);
+            ctx.lineTo(p.x + i, y + 8);
+          } else {
+            ctx.moveTo(p.x + i + 6, y + 4);
+            ctx.lineTo(p.x + i, y + 6);
+            ctx.lineTo(p.x + i + 6, y + 8);
+          }
+          ctx.stroke();
         }
-        requestAnimationFrame(tick);
-      };
-    }
-
-    let useExternalAdvance = false;
-    window.advanceTime = (ms) => {
-      useExternalAdvance = true;
-      const steps = Math.max(1, Math.round(ms / (1000 / 60)));
-      for (let i = 0; i < steps; i++) update(1 / 60);
-      draw();
-    };
-
-    function renderGameToText() {
-      const payload = {
-        coordinateSystem: "origin top-left, +x right, +y down",
-        mode: state.mode,
-        player: {
-          x: round(state.player.x),
-          y: round(state.player.y),
-          w: state.player.w,
-          h: state.player.h,
-          vx: round(state.player.vx),
-          vy: round(state.player.vy),
-        },
-        lives: state.lives,
-        floor: state.floor,
-        spikeCeilingY: round(state.spikeCeilingY),
-        cameraY: round(state.cameraY),
-        platforms: state.platforms
-          .filter(p => !(p.used && p.type === "fragile" && p.fallV <= 0))
-          .map(p => ({
-            x: round(p.x),
-            y: round(p.y),
-            w: round(p.w),
-            h: p.h,
-            type: p.type,
-            conveyor: p.conveyor,
-            falling: p.fallV > 0,
-            springPower: p.springPower || 0,
-          })),
-      };
-      return JSON.stringify(payload);
-    }
-    window.render_game_to_text = renderGameToText;
-
-    function round(n) {
-      return Math.round(n * 10) / 10;
-    }
-
-    function updateHud() {
-      if (floorEl) floorEl.textContent = `FLOOR: ${state.floor}`;
-      const hpLabel = document.querySelector("#hp .label");
-      if (hpLabel) hpLabel.textContent = `HP ${state.lives}/${state.maxLives}`;
-      if (hpFillEl) {
-        const ratio = Math.max(0, Math.min(1, state.lives / state.maxLives));
-        hpFillEl.style.width = `${Math.round(ratio * 100)}%`;
-        hpFillEl.style.background = ratio > 0.5 ? "#7bdcff" : ratio > 0.25 ? "#f2c14e" : "#ff6b6b";
-      }
-      if (heartsEl) {
-        heartsEl.innerHTML = "";
-        const shown = Math.min(state.lives, 5);
-        for (let i = 0; i < shown; i++) {
-          const heart = document.createElement("div");
-          heart.className = "heart";
-          heartsEl.appendChild(heart);
+      } else if (p.type === "spike") {
+        ctx.fillStyle = pal.dark;
+        ctx.fillRect(p.x, y, p.w, p.h);
+        ctx.strokeRect(p.x, y, p.w, p.h);
+        ctx.fillStyle = pal.fg;
+        const spikeHeight = 6;
+        const step = 12;
+        for (let i = 0; i <= p.w; i += step) {
+          const x0 = p.x + i;
+          const x1 = Math.min(p.x + i + step / 2, p.x + p.w);
+          const x2 = Math.min(p.x + i + step, p.x + p.w);
+          ctx.beginPath();
+          ctx.moveTo(x0, y);
+          ctx.lineTo(x1, y - spikeHeight);
+          ctx.lineTo(x2, y);
+          ctx.closePath();
+          ctx.fill();
         }
-      }
-      if (startBtn) {
-        if (state.mode === "playing") {
-          startBtn.classList.add("hidden");
-        } else {
-          startBtn.classList.remove("hidden");
-          startBtn.textContent = state.mode === "gameover" ? "REPLAY" : "START";
-          startBtn.style.top = state.mode === "gameover" ? "62%" : "50%";
+      } else if (p.type === "spring") {
+        const plateH = 3;
+        ctx.fillStyle = pal.light;
+        ctx.fillRect(p.x, y, p.w, plateH);
+        ctx.strokeRect(p.x, y, p.w, plateH);
+        ctx.fillRect(p.x, y + p.h - plateH, p.w, plateH);
+        ctx.strokeRect(p.x, y + p.h - plateH, p.w, plateH);
+        ctx.strokeStyle = pal.dark;
+        const coilTop = y + plateH;
+        const coilBottom = y + p.h - plateH;
+        const coilW = p.w * 0.6;
+        const coilX = p.x + (p.w - coilW) / 2;
+        const segments = 5;
+        for (let i = 0; i < segments; i++) {
+          const t0 = i / segments;
+          const t1 = (i + 1) / segments;
+          const x0 = coilX + (i % 2 === 0 ? 0 : coilW);
+          const x1 = coilX + (i % 2 === 0 ? coilW : 0);
+          const y0 = coilTop + (coilBottom - coilTop) * t0;
+          const y1 = coilTop + (coilBottom - coilTop) * t1;
+          ctx.beginPath();
+          ctx.moveTo(x0, y0);
+          ctx.lineTo(x1, y1);
+          ctx.stroke();
         }
       }
     }
 
-    function drawPlayerPixel(x, y, w, h, hurt) {
-      const palette = {
-        skin: "#f6c7a5",
-        shirt: "#6aa6ff",
-        pants: "#3b4b6f",
-        hair: "#2a1c15",
-        hurt: "#ffd166",
-      };
+    function drawPlayerPixel(x, y, w, h, pal) {
       const sprite = [
-        "  hh  ",
-        " hhhh ",
-        " hs sh",
-        " hssh ",
-        "  ss  ",
-        " sssss",
-        "  pp  ",
-        " p  p ",
-        " p  p ",
-        " p  p ",
-        " p  p ",
-        "      ",
+        "   ####   ",
+        "  ######  ",
+        "  ##..##  ",
+        "  ######  ",
+        "   ####   ",
+        "  ######  ",
+        " ######## ",
+        "   ####   ",
+        "  ######  ",
+        "  ######  ",
+        "  ##  ##  ",
+        "  ##  ##  ",
       ];
       const cols = sprite[0].length;
       const rows = sprite.length;
@@ -833,16 +881,105 @@
         for (let c = 0; c < cols; c++) {
           const ch = sprite[r][c];
           if (ch === " ") continue;
-          let color = palette.shirt;
-          if (ch === "h") color = palette.hair;
-          if (ch === "s") color = palette.skin;
-          if (ch === "p") color = palette.pants;
-          if (hurt) color = palette.hurt;
-          ctx.fillStyle = color;
+          ctx.fillStyle = ch === "." ? pal.light : pal.fg;
           ctx.fillRect(x + c * px, y + r * py, Math.ceil(px), Math.ceil(py));
         }
       }
-      // No outline: keep sprite crisp.
+    }
+
+    function drawGame() {
+      drawBackground();
+
+      const pal = getPalette();
+      const scale = Math.min(canvas.width / WORLD.width, canvas.height / WORLD.height);
+      const offsetX = (canvas.width - WORLD.width * scale) / 2;
+      const offsetY = (canvas.height - WORLD.height * scale) / 2;
+
+      ctx.save();
+      ctx.translate(offsetX, offsetY);
+      ctx.scale(scale, scale);
+
+      ctx.fillStyle = pal.bg;
+      ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+
+      drawCeiling(pal);
+
+      for (const p of state.platforms) {
+        if (p.used && p.type === "fragile" && p.fallV <= 0) continue;
+        drawPlatform(p, pal);
+      }
+
+      drawPlayerPixel(state.player.x, state.player.y - state.cameraY, state.player.w, state.player.h, pal);
+
+      ctx.restore();
+    }
+
+    function drawTitle() {
+      drawBackground();
+      ctx.fillStyle = getPalette().fg;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "18px \"Courier New\", monospace";
+      ctx.fillText(CONFIG.title, canvas.width / 2, canvas.height * 0.4);
+      ctx.font = "14px \"Courier New\", monospace";
+      ctx.fillText("按开始 / 任意键", canvas.width / 2, canvas.height * 0.5);
+    }
+
+    function drawGameOver() {
+      drawGame();
+      ctx.fillStyle = getPalette().fg;
+      ctx.textAlign = "center";
+      ctx.font = "16px \"Courier New\", monospace";
+      ctx.fillText("GAME OVER", canvas.width / 2, canvas.height * 0.3);
+      ctx.fillText(`地下 ${state.floor} 层`, canvas.width / 2, canvas.height * 0.36);
+    }
+
+    function drawWin() {
+      drawBackground();
+      ctx.fillStyle = getPalette().fg;
+      ctx.textAlign = "center";
+      ctx.font = "16px \"Courier New\", monospace";
+      ctx.fillText("You made it.", canvas.width / 2, canvas.height * 0.4);
+      ctx.fillText("地下 100 层", canvas.width / 2, canvas.height * 0.46);
+      ctx.fillText("下面，没有了。", canvas.width / 2, canvas.height * 0.52);
+    }
+
+    function draw() {
+      if (state.mode === "boot") {
+        drawBoot();
+        return;
+      }
+      if (state.mode === "title") {
+        drawTitle();
+        return;
+      }
+      if (state.mode === "gameover") {
+        drawGameOver();
+        return;
+      }
+      if (state.mode === "win") {
+        drawWin();
+        return;
+      }
+      drawGame();
+    }
+
+    function updateHud() {
+      if (floorEl) floorEl.textContent = `地下: ${state.floor}`;
+      if (hpLabelEl) hpLabelEl.textContent = `HP ${state.lives}/${state.maxLives}`;
+      if (hpFillEl) {
+        const ratio = Math.max(0, Math.min(1, state.lives / state.maxLives));
+        hpFillEl.style.width = `${Math.round(ratio * 100)}%`;
+      }
+      if (startBtn) {
+        if (state.mode === "playing" || state.mode === "boot" || state.mode === "win") {
+          startBtn.classList.add("hidden");
+        } else {
+          startBtn.classList.remove("hidden");
+          startBtn.textContent = state.mode === "gameover" ? "再来一次" : "开始";
+          startBtn.style.top = state.mode === "gameover" ? "62%" : "50%";
+        }
+      }
     }
 
     function ensureAudio() {
@@ -856,117 +993,74 @@
 
     function playSfx(kind) {
       if (!state.sfx) return;
-      const ctx = state.sfx;
-      const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+      const ctxAudio = state.sfx;
+      const now = ctxAudio.currentTime;
+      const osc = ctxAudio.createOscillator();
+      const gain = ctxAudio.createGain();
       osc.type = "square";
       if (kind === "start") {
         osc.frequency.value = 440;
-        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.setValueAtTime(0.06, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
         osc.start(now);
         osc.stop(now + 0.12);
       } else if (kind === "hurt") {
-        osc.frequency.setValueAtTime(220, now);
-        osc.frequency.exponentialRampToValueAtTime(110, now + 0.18);
-        gain.gain.setValueAtTime(0.12, now);
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.exponentialRampToValueAtTime(110, now + 0.2);
+        gain.gain.setValueAtTime(0.08, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
         osc.start(now);
         osc.stop(now + 0.2);
       } else if (kind === "spring") {
         osc.frequency.setValueAtTime(520, now);
         osc.frequency.exponentialRampToValueAtTime(760, now + 0.12);
-        gain.gain.setValueAtTime(0.09, now);
+        gain.gain.setValueAtTime(0.06, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
         osc.start(now);
         osc.stop(now + 0.15);
       } else if (kind === "gameover") {
         osc.frequency.setValueAtTime(180, now);
         osc.frequency.exponentialRampToValueAtTime(90, now + 0.3);
-        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.setValueAtTime(0.08, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
         osc.start(now);
         osc.stop(now + 0.35);
       }
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(ctxAudio.destination);
     }
 
-    function clamp(value, min, max) {
-      return Math.max(min, Math.min(max, value));
+    function enterTitle() {
+      state.mode = "title";
+      updateHud();
     }
 
-    function updateDifficulty() {
-      if (state.difficulty === "easy") {
-        state.scrollSpeed = TUNE.scrollSpeeds.easy;
-        state.conveyorSpeed = TUNE.conveyorSpeeds.easy;
-        state.invulnDuration = TUNE.invuln.easy;
-      } else if (state.difficulty === "hard") {
-        state.scrollSpeed = TUNE.scrollSpeeds.hard;
-        state.conveyorSpeed = TUNE.conveyorSpeeds.hard;
-        state.invulnDuration = TUNE.invuln.hard;
-      } else {
-        state.scrollSpeed = TUNE.scrollSpeeds.normal;
-        state.conveyorSpeed = TUNE.conveyorSpeeds.normal;
-        state.invulnDuration = TUNE.invuln.normal;
-      }
-    }
-
-    function nextGap(y) {
-      const depth = Math.max(0, Math.floor((y - 60) / 120));
-      let base = depth < 4 ? randRange(70, 100) : randRange(80, 115);
-      if (state.difficulty === "easy") base += TUNE.gapEasyAdjust;
-      if (state.difficulty === "hard") base += TUNE.gapHardAdjust;
-      const bonus = Math.min(18, depth * 1.2);
-      return base + bonus;
-    }
-
-    function choosePlatformType(depth) {
-      const roll = Math.random();
-      const hard = state.difficulty === "hard";
-      const easy = state.difficulty === "easy";
-      if (depth < 2) {
-        return roll < (easy ? 0.85 : 0.75) ? "normal" : "fragile";
-      }
-      if (depth < 6) {
-        if (roll < (easy ? 0.7 : hard ? 0.5 : 0.6)) return "normal";
-        if (roll < (easy ? 0.86 : hard ? 0.74 : 0.78)) return "fragile";
-        if (roll < (easy ? 0.94 : hard ? 0.88 : 0.9)) return "conveyor";
-        if (roll < (easy ? 0.98 : hard ? 0.93 : 0.96)) return "spring";
-        return "spike";
-      }
-      if (roll < (easy ? 0.65 : hard ? 0.45 : 0.55)) return "normal";
-      if (roll < (easy ? 0.82 : hard ? 0.7 : 0.74)) return "fragile";
-      if (roll < (easy ? 0.92 : hard ? 0.85 : 0.88)) return "conveyor";
-      if (roll < (easy ? 0.97 : hard ? 0.91 : 0.95)) return "spring";
-      return "spike";
+    function startGame() {
+      state.mode = "playing";
+      resetGame();
+      playSfx("start");
+      updateHud();
     }
 
     document.addEventListener("keydown", (e) => {
       ensureAudio();
+      if (e.code === "KeyM") {
+        toggleDisplayMode();
+        return;
+      }
+      if (state.mode === "boot") {
+        if (state.bootReady) enterTitle();
+        return;
+      }
+      if (state.mode === "title" && e.code === "Enter") {
+        startGame();
+        return;
+      }
+      if (state.mode === "gameover" && (e.code === "Enter" || e.code === "KeyR")) {
+        startGame();
+        return;
+      }
       state.keys.add(e.code);
-      if (e.code === "Enter" && state.mode === "title") {
-        state.mode = "playing";
-        resetGame();
-        playSfx("start");
-      }
-      if (e.code === "Enter" && state.mode === "gameover") {
-        state.mode = "playing";
-        resetGame();
-        playSfx("start");
-      }
-      if (e.code === "KeyR" && state.mode === "gameover") {
-        state.mode = "playing";
-        resetGame();
-        playSfx("start");
-      }
-      if (e.code === "KeyF") {
-        toggleFullscreen();
-      }
-      if (e.code === "Escape" && document.fullscreenElement) {
-        document.exitFullscreen();
-      }
     });
 
     document.addEventListener("keyup", (e) => {
@@ -976,10 +1070,9 @@
     if (startBtn) {
       startBtn.addEventListener("click", () => {
         ensureAudio();
-        state.mode = "playing";
-        resetGame();
-        playSfx("start");
-        updateHud();
+        if (state.mode === "title" || state.mode === "gameover") {
+          startGame();
+        }
       });
     }
 
@@ -989,7 +1082,6 @@
         updateDifficulty();
       });
     }
-
 
     function setKey(code, down) {
       if (down) state.keys.add(code);
@@ -1044,15 +1136,103 @@
       gameBox.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
     }
 
-    function toggleFullscreen() {
-      if (!document.fullscreenElement) {
-        canvas.requestFullscreen().catch(() => {});
-      } else {
-        document.exitFullscreen();
-      }
+    let bootHoldTimer = null;
+    let bootHoldFired = false;
+    if (gameBox) {
+      gameBox.addEventListener("pointerdown", () => {
+        if (state.mode !== "boot") return;
+        bootHoldFired = false;
+        bootHoldTimer = setTimeout(() => {
+          bootHoldFired = true;
+          toggleBwMode();
+        }, 3000);
+      });
+      gameBox.addEventListener("pointerup", () => {
+        if (bootHoldTimer) clearTimeout(bootHoldTimer);
+        bootHoldTimer = null;
+        if (state.mode === "boot" && state.bootReady && !bootHoldFired) {
+          enterTitle();
+        }
+      });
+      gameBox.addEventListener("pointerleave", () => {
+        if (bootHoldTimer) clearTimeout(bootHoldTimer);
+        bootHoldTimer = null;
+      });
     }
 
-    resetGame();
+    function step(dt) {
+      state.clock += dt;
+      if (state.mode === "playing") {
+        update(dt);
+      } else if (state.mode === "win") {
+        updateWin(dt);
+      }
+      draw();
+      updateHud();
+    }
+
+    function gameLoop(lastTime) {
+      return function tick(ts) {
+        const delta = (ts - lastTime) / 1000;
+        lastTime = ts;
+        if (!useExternalAdvance) {
+          const dt = Math.min(0.033, delta);
+          step(dt);
+        }
+        requestAnimationFrame(tick);
+      };
+    }
+
+    let useExternalAdvance = false;
+    window.advanceTime = (ms) => {
+      useExternalAdvance = true;
+      const steps = Math.max(1, Math.round(ms / (1000 / 60)));
+      for (let i = 0; i < steps; i++) step(1 / 60);
+    };
+
+    function renderGameToText() {
+      const payload = {
+        coordinateSystem: "origin top-left, +x right, +y down",
+        mode: state.mode,
+        displayMode: state.displayMode,
+        bwMode: state.bwMode,
+        difficulty: state.difficulty,
+        player: {
+          x: round(state.player.x),
+          y: round(state.player.y),
+          w: state.player.w,
+          h: state.player.h,
+          vx: round(state.player.vx),
+          vy: round(state.player.vy),
+        },
+        lives: state.lives,
+        floor: state.floor,
+        spikeCeilingY: round(state.spikeCeilingY),
+        cameraY: round(state.cameraY),
+        platforms: state.platforms.map(p => ({
+          x: round(p.x),
+          y: round(p.y),
+          w: round(p.w),
+          h: p.h,
+          type: p.type,
+          conveyor: p.conveyor,
+          falling: p.fallV > 0,
+        })),
+      };
+      return JSON.stringify(payload);
+    }
+    window.render_game_to_text = renderGameToText;
+
+    function round(n) {
+      return Math.round(n * 10) / 10;
+    }
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js").catch(() => {});
+    }
+
+    updateDifficulty();
+    updateHud();
     requestAnimationFrame(gameLoop(performance.now()));
   </script>
 </body>

@@ -1,11 +1,11 @@
 {
-  "name": "NS-SHAFT Tribute",
-  "short_name": "NS-SHAFT",
+  "name": "是男人就下100层",
+  "short_name": "下100层",
   "start_url": ".",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0b0d14",
-  "theme_color": "#0b0d14",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "icons": [
     {
       "src": "logo.png",
