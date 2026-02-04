@@ -3,6 +3,7 @@
   "short_name": "NS-SHAFT",
   "start_url": ".",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0b0d14",
   "theme_color": "#0b0d14",
   "icons": [

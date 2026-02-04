@@ -2,9 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>NS-SHAFT Tribute</title>
   <meta name="theme-color" content="#0b0d14" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="NS-SHAFT" />
   <link rel="icon" href="logo.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="logo.png" />
   <link rel="manifest" href="manifest.json" />
@@ -27,12 +30,14 @@
     }
     #wrap {
       width: 100%;
-      height: 100%;
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       gap: 14px;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      box-sizing: border-box;
     }
     #hud {
       width: min(680px, 96vw);
@@ -56,6 +61,13 @@
       display: flex;
       align-items: center;
       gap: 10px;
+    }
+    #difficulty {
+      background: #1f2435;
+      color: #f6f1e6;
+      border: 1px solid #3a435a;
+      padding: 4px 8px;
+      font-size: 14px;
     }
     #hp-bar {
       width: clamp(120px, 30vw, 180px);
@@ -155,6 +167,14 @@
         <div id="hp-bar"><div id="hp-fill"></div></div>
         <div id="hearts"></div>
       </div>
+      <div>
+        <label for="difficulty">MODE</label>
+        <select id="difficulty">
+          <option value="easy">E</option>
+          <option value="normal" selected>N</option>
+          <option value="hard">H</option>
+        </select>
+      </div>
       <div id="floor">FLOOR: 0</div>
       <img id="hud-logo" src="logo.png?v=2" alt="Logo" />
     </div>
@@ -178,6 +198,25 @@
     const gameBox = document.getElementById("game-box");
     const btnLeft = document.getElementById("btn-left");
     const btnRight = document.getElementById("btn-right");
+    const difficultyEl = document.getElementById("difficulty");
+    const TUNE = {
+      maxLives: 15,
+      damageSpike: 3,
+      healNormal: 1,
+      bottomDeathOffset: 80,
+      gravityBase: 700,
+      gravityAirAccel: 200,
+      gravityAirAccelMax: 520,
+      gravityLowBoost: 260,
+      terminalVy: 1150,
+      ceilingPushDown: 6,
+      ceilingMinVy: 120,
+      gapEasyAdjust: -8,
+      gapHardAdjust: 10,
+      scrollSpeeds: { easy: 50, normal: 75, hard: 100 },
+      conveyorSpeeds: { easy: 55, normal: 70, hard: 80 },
+      invuln: { easy: 1.5, normal: 1.3, hard: 1.1 },
+    };
 
 
     const WORLD = {
@@ -195,10 +234,11 @@
 
     const state = {
       mode: "title",
+      difficulty: "normal",
       time: 0,
       floor: 0,
-      lives: 3,
-      maxLives: 3,
+      lives: TUNE.maxLives,
+      maxLives: TUNE.maxLives,
       cameraY: 0,
       scrollOffset: 0,
       spikeCeilingY: 0,
@@ -207,10 +247,12 @@
       invuln: 0,
       invulnDuration: 1.3,
       conveyorSpeed: 70,
-      scrollSpeed: 6,
+      scrollSpeed: TUNE.scrollSpeeds.normal,
       sfx: null,
       platforms: [],
       nextPlatformY: 0,
+      airTime: 0,
+      wasGrounded: false,
       spawn: {
         lastX: 160,
         lastType: "normal",
@@ -251,7 +293,7 @@
     function resetGame() {
       state.time = 0;
       state.floor = 0;
-      state.lives = 3;
+      state.lives = state.maxLives;
       state.invuln = 0;
       state.cameraY = 0;
       state.scrollOffset = 0;
@@ -267,10 +309,12 @@
       state.spawn.lastType = "normal";
       state.spawn.specialStreak = 0;
       seedPlatforms();
+      updateDifficulty();
     }
 
     function seedPlatforms() {
-      while (state.nextPlatformY < state.player.y + 600) {
+      const spawnAnchor = Math.max(state.cameraY, state.player.y);
+      while (state.nextPlatformY < spawnAnchor + WORLD.height + 800) {
         spawnPlatform(state.nextPlatformY);
         state.nextPlatformY += nextGap(state.nextPlatformY);
       }
@@ -344,12 +388,17 @@
 
       if (state.mode !== "playing") return;
 
-      let gravity = 700;
-      if (state.player.vy > 0 && state.player.y > state.cameraY + WORLD.height * 0.65) {
-        gravity += 220;
+      const drift = state.scrollSpeed * dt;
+      state.scrollOffset += drift;
+      state.cameraY = state.scrollOffset;
+
+      state.airTime += dt;
+      let gravity = TUNE.gravityBase + Math.min(TUNE.gravityAirAccelMax, state.airTime * TUNE.gravityAirAccel);
+      if (state.player.vy > 0 && state.player.y > state.cameraY + WORLD.height * 0.6) {
+        gravity += TUNE.gravityLowBoost;
       }
       state.player.vy += gravity * dt;
-      if (state.player.vy > 1100) state.player.vy = 1100;
+      if (state.player.vy > TUNE.terminalVy) state.player.vy = TUNE.terminalVy;
 
       const wasY = state.player.y;
       const wasX = state.player.x;
@@ -368,6 +417,7 @@
 
       let grounded = false;
       let groundedPlatform = null;
+      let landedNormal = false;
       for (const p of state.platforms) {
         if ((p.used && p.type === "fragile") || p.breaking) continue;
         if (state.player.vy < 0 &&
@@ -400,8 +450,10 @@
 
           grounded = true;
           groundedPlatform = p;
+          landedNormal = p.type === "normal";
           state.player.y = p.y - state.player.h;
           state.player.vy = 0;
+          state.airTime = 0;
           if (p.type === "fragile") {
             p.used = true;
             p.breaking = true;
@@ -422,25 +474,37 @@
         }
       }
 
-      const drift = state.scrollSpeed * dt;
-      for (const p of state.platforms) {
-        p.y -= drift;
+      const justLanded = grounded && !state.wasGrounded;
+      if (justLanded && landedNormal && state.lives < state.maxLives) {
+        state.lives = Math.min(state.maxLives, state.lives + TUNE.healNormal);
       }
-      state.scrollOffset += drift;
-      if (grounded && groundedPlatform) {
-        state.player.y -= drift;
+
+      // Side collision to prevent sliding into wall gaps at platform edges.
+      for (const p of state.platforms) {
+        if ((p.used && p.type === "fragile") || p.breaking) continue;
+        const overlapY = state.player.y + state.player.h > p.y && state.player.y < p.y + p.h;
+        if (!overlapY) continue;
+        if (state.player.vx > 0 &&
+            wasX + state.player.w <= p.x &&
+            state.player.x + state.player.w >= p.x) {
+          state.player.x = p.x - state.player.w;
+          state.player.vx = 0;
+        } else if (state.player.vx < 0 &&
+                   wasX >= p.x + p.w &&
+                   state.player.x <= p.x + p.w) {
+          state.player.x = p.x + p.w;
+          state.player.vx = 0;
+        }
       }
 
       applyInput(dt, grounded);
-
-      state.cameraY = Math.max(0, state.player.y - WORLD.height * 0.35 + state.scrollOffset);
 
       state.spikeCeilingY = state.cameraY + state.spikeOffset;
       const ceilingBottom = state.spikeCeilingY + 26;
       if (state.player.y <= ceilingBottom) {
         hurtPlayer();
-        state.player.y = ceilingBottom;
-        state.player.vy = Math.max(0, state.player.vy);
+        state.player.y = ceilingBottom + TUNE.ceilingPushDown;
+        state.player.vy = Math.max(TUNE.ceilingMinVy, state.player.vy);
       }
 
       if (state.invuln > 0) {
@@ -451,10 +515,8 @@
       const depth = Math.max(0, state.player.y - 60);
       state.floor = Math.floor(depth / 120);
 
-      state.cameraY = Math.max(0, state.player.y - WORLD.height * 0.35 + state.scrollOffset * 0.6);
-      state.spikeCeilingY = state.cameraY + state.spikeOffset;
 
-      while (state.nextPlatformY < state.player.y + 800) {
+      while (state.nextPlatformY < state.cameraY + WORLD.height + 800) {
         spawnPlatform(state.nextPlatformY);
         state.nextPlatformY += nextGap(state.nextPlatformY);
       }
@@ -473,19 +535,24 @@
         }
       }
 
-      state.platforms = state.platforms.filter(p => p.y > state.cameraY - 240);
-      state.platforms = state.platforms.filter(p => p.y < state.cameraY + WORLD.height + 500);
+      const keepMin = Math.min(state.cameraY, state.player.y) - 240;
+      const keepMax = Math.max(state.cameraY, state.player.y) + WORLD.height + 800;
+      state.platforms = state.platforms.filter(p => p.y > keepMin && p.y < keepMax);
 
-      if (state.player.y > state.cameraY + WORLD.height + 200) {
-        hurtPlayer();
-        state.player.y = state.cameraY + WORLD.height * 0.3;
-        state.player.vy = 0;
+      if (state.player.y > state.cameraY + WORLD.height + TUNE.bottomDeathOffset) {
+        state.lives = 0;
+        state.mode = "gameover";
+        playSfx("gameover");
       }
+
+      state.wasGrounded = grounded;
+
     }
 
     function hurtPlayer() {
       if (state.invuln > 0) return;
-      state.lives -= 1;
+      state.lives -= TUNE.damageSpike;
+      if (state.lives < 0) state.lives = 0;
       state.invuln = state.invulnDuration;
       playSfx("hurt");
       if (state.lives <= 0) {
@@ -623,8 +690,7 @@
         drawCenteredText([
           "GAME OVER",
           `FLOOR ${state.floor}`,
-          "PRESS R TO RESTART",
-        ], 0.5);
+        ], 0.32);
       }
 
       if (state.invuln > 0) {
@@ -710,6 +776,8 @@
 
     function updateHud() {
       if (floorEl) floorEl.textContent = `FLOOR: ${state.floor}`;
+      const hpLabel = document.querySelector("#hp .label");
+      if (hpLabel) hpLabel.textContent = `HP ${state.lives}/${state.maxLives}`;
       if (hpFillEl) {
         const ratio = Math.max(0, Math.min(1, state.lives / state.maxLives));
         hpFillEl.style.width = `${Math.round(ratio * 100)}%`;
@@ -717,7 +785,8 @@
       }
       if (heartsEl) {
         heartsEl.innerHTML = "";
-        for (let i = 0; i < state.lives; i++) {
+        const shown = Math.min(state.lives, 5);
+        for (let i = 0; i < shown; i++) {
           const heart = document.createElement("div");
           heart.className = "heart";
           heartsEl.appendChild(heart);
@@ -729,6 +798,7 @@
         } else {
           startBtn.classList.remove("hidden");
           startBtn.textContent = state.mode === "gameover" ? "REPLAY" : "START";
+          startBtn.style.top = state.mode === "gameover" ? "62%" : "50%";
         }
       }
     }
@@ -827,29 +897,49 @@
       return Math.max(min, Math.min(max, value));
     }
 
+    function updateDifficulty() {
+      if (state.difficulty === "easy") {
+        state.scrollSpeed = TUNE.scrollSpeeds.easy;
+        state.conveyorSpeed = TUNE.conveyorSpeeds.easy;
+        state.invulnDuration = TUNE.invuln.easy;
+      } else if (state.difficulty === "hard") {
+        state.scrollSpeed = TUNE.scrollSpeeds.hard;
+        state.conveyorSpeed = TUNE.conveyorSpeeds.hard;
+        state.invulnDuration = TUNE.invuln.hard;
+      } else {
+        state.scrollSpeed = TUNE.scrollSpeeds.normal;
+        state.conveyorSpeed = TUNE.conveyorSpeeds.normal;
+        state.invulnDuration = TUNE.invuln.normal;
+      }
+    }
+
     function nextGap(y) {
       const depth = Math.max(0, Math.floor((y - 60) / 120));
-      const base = depth < 4 ? randRange(70, 100) : randRange(80, 115);
+      let base = depth < 4 ? randRange(70, 100) : randRange(80, 115);
+      if (state.difficulty === "easy") base += TUNE.gapEasyAdjust;
+      if (state.difficulty === "hard") base += TUNE.gapHardAdjust;
       const bonus = Math.min(18, depth * 1.2);
       return base + bonus;
     }
 
     function choosePlatformType(depth) {
       const roll = Math.random();
+      const hard = state.difficulty === "hard";
+      const easy = state.difficulty === "easy";
       if (depth < 2) {
-        return roll < 0.75 ? "normal" : "fragile";
+        return roll < (easy ? 0.85 : 0.75) ? "normal" : "fragile";
       }
       if (depth < 6) {
-        if (roll < 0.6) return "normal";
-        if (roll < 0.78) return "fragile";
-        if (roll < 0.9) return "conveyor";
-        if (roll < 0.96) return "spring";
+        if (roll < (easy ? 0.7 : hard ? 0.5 : 0.6)) return "normal";
+        if (roll < (easy ? 0.86 : hard ? 0.74 : 0.78)) return "fragile";
+        if (roll < (easy ? 0.94 : hard ? 0.88 : 0.9)) return "conveyor";
+        if (roll < (easy ? 0.98 : hard ? 0.93 : 0.96)) return "spring";
         return "spike";
       }
-      if (roll < 0.55) return "normal";
-      if (roll < 0.74) return "fragile";
-      if (roll < 0.88) return "conveyor";
-      if (roll < 0.95) return "spring";
+      if (roll < (easy ? 0.65 : hard ? 0.45 : 0.55)) return "normal";
+      if (roll < (easy ? 0.82 : hard ? 0.7 : 0.74)) return "fragile";
+      if (roll < (easy ? 0.92 : hard ? 0.85 : 0.88)) return "conveyor";
+      if (roll < (easy ? 0.97 : hard ? 0.91 : 0.95)) return "spring";
       return "spike";
     }
 
@@ -857,6 +947,11 @@
       ensureAudio();
       state.keys.add(e.code);
       if (e.code === "Enter" && state.mode === "title") {
+        state.mode = "playing";
+        resetGame();
+        playSfx("start");
+      }
+      if (e.code === "Enter" && state.mode === "gameover") {
         state.mode = "playing";
         resetGame();
         playSfx("start");
@@ -887,6 +982,14 @@
         updateHud();
       });
     }
+
+    if (difficultyEl) {
+      difficultyEl.addEventListener("change", () => {
+        state.difficulty = difficultyEl.value;
+        updateDifficulty();
+      });
+    }
+
 
     function setKey(code, down) {
       if (down) state.keys.add(code);
