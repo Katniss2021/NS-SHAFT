@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NS-SHAFT Tribute</title>
+  <style>
+    :root {
+      color-scheme: light;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at top, #1d2130 0%, #0b0d14 55%, #05060a 100%);
+      font-family: "Courier New", "Menlo", "Monaco", monospace;
+      color: #f6f1e6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #wrap {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+    #hud {
+      width: min(680px, 96vw);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 18px;
+      letter-spacing: 0.5px;
+      padding: 0 6px;
+      box-sizing: border-box;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    #hp {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #hp-bar {
+      width: clamp(120px, 30vw, 180px);
+      height: 14px;
+      background: #1f2435;
+      border: 1px solid #3a435a;
+      position: relative;
+    }
+    #hp-fill {
+      height: 100%;
+      width: 100%;
+      background: #7bdcff;
+    }
+    #hearts {
+      display: flex;
+      gap: 4px;
+    }
+    .heart {
+      width: 10px;
+      height: 10px;
+      background: #ff6b6b;
+      clip-path: polygon(50% 90%, 100% 45%, 80% 10%, 50% 25%, 20% 10%, 0% 45%);
+    }
+    #game-box {
+      border: 3px solid #394055;
+      box-shadow:
+        0 10px 30px rgba(0,0,0,0.55),
+        0 0 0 5px rgba(15, 18, 26, 0.7);
+      background: #0b0d14;
+      padding: 6px;
+      max-width: 96vw;
+    }
+    canvas {
+      background: #0f1118;
+      border: none;
+      box-shadow: none;
+      image-rendering: pixelated;
+    }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="hud">
+      <div id="hp">
+        <span class="label">HP</span>
+        <div id="hp-bar"><div id="hp-fill"></div></div>
+        <div id="hearts"></div>
+      </div>
+      <div id="floor">FLOOR: 0</div>
+    </div>
+    <div id="game-box">
+      <canvas id="game" width="480" height="720" aria-label="NS-SHAFT"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const floorEl = document.getElementById("floor");
+    const heartsEl = document.getElementById("hearts");
+    const hpFillEl = document.getElementById("hp-fill");
+
+    const WORLD = {
+      width: 360,
+      height: 640,
+    };
+
+    const COLORS = {
+      normal: "#f2c14e",
+      fragile: "#f08a5d",
+      conveyor: "#4ecca3",
+      spike: "#ff6b6b",
+      spring: "#7bdcff",
+    };
+
+    const state = {
+      mode: "title",
+      time: 0,
+      floor: 0,
+      lives: 3,
+      maxLives: 3,
+      cameraY: 0,
+      scrollOffset: 0,
+      spikeCeilingY: 0,
+      spikeOffset: -10,
+      spikeSpeed: 0,
+      invuln: 0,
+      invulnDuration: 1.3,
+      conveyorSpeed: 70,
+      scrollSpeed: 6,
+      sfx: null,
+      platforms: [],
+      nextPlatformY: 0,
+      spawn: {
+        lastX: 160,
+        lastType: "normal",
+        specialStreak: 0,
+      },
+      player: {
+        x: 160,
+        y: 80,
+        w: 26,
+        h: 36,
+        vx: 0,
+        vy: 0,
+        speed: 160,
+        airControl: 0.8,
+      },
+      keys: new Set(),
+    };
+
+    function resize() {
+      const padding = 24;
+      const hudReserve = 72;
+      const maxW = Math.max(320, window.innerWidth - padding * 2);
+      const maxH = Math.max(320, window.innerHeight - padding * 2 - hudReserve);
+      const ratio = WORLD.width / WORLD.height;
+      let w = maxW;
+      let h = Math.round(maxW / ratio);
+      if (h > maxH) {
+        h = maxH;
+        w = Math.round(maxH * ratio);
+      }
+      canvas.width = w;
+      canvas.height = h;
+    }
+
+    window.addEventListener("resize", resize);
+    resize();
+
+    function resetGame() {
+      state.time = 0;
+      state.floor = 0;
+      state.lives = 3;
+      state.invuln = 0;
+      state.cameraY = 0;
+      state.scrollOffset = 0;
+      state.player.x = WORLD.width * 0.5 - state.player.w / 2;
+      state.player.y = 60;
+      state.player.vx = 0;
+      state.player.vy = 40;
+      state.platforms = [];
+      state.nextPlatformY = 120;
+      state.spikeOffset = -10;
+      state.spikeCeilingY = state.cameraY + state.spikeOffset;
+      state.spawn.lastX = state.player.x;
+      state.spawn.lastType = "normal";
+      state.spawn.specialStreak = 0;
+      seedPlatforms();
+    }
+
+    function seedPlatforms() {
+      while (state.nextPlatformY < state.player.y + 600) {
+        spawnPlatform(state.nextPlatformY);
+        state.nextPlatformY += nextGap(state.nextPlatformY);
+      }
+    }
+
+    function randRange(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function spawnPlatform(y) {
+      const depth = Math.max(0, Math.floor((y - 60) / 120));
+      let type = choosePlatformType(depth);
+      if (state.spawn.specialStreak >= 1 && type !== "normal") {
+        type = "normal";
+      }
+      if (depth < 2 && (type === "spike" || type === "conveyor" || type === "spring")) {
+        type = "normal";
+      }
+
+      let width = randRange(100, 140);
+      if (type === "fragile") width = randRange(80, 120);
+      if (type === "conveyor") width = randRange(90, 130);
+      if (type === "spike") width = randRange(90, 120);
+      if (type === "spring") width = randRange(80, 110);
+
+      const margin = 18;
+      const minX = margin;
+      const maxX = WORLD.width - width - margin;
+      let x = clamp(state.spawn.lastX + randRange(-140, 140), minX, maxX);
+      if (Math.abs(x - state.spawn.lastX) > 150) {
+        x = clamp(state.spawn.lastX + (x > state.spawn.lastX ? 150 : -150), minX, maxX);
+      }
+
+      const platform = {
+        x,
+        y,
+        w: width,
+        h: 12,
+        type,
+        used: false,
+        breaking: false,
+        breakTimer: 0,
+        fallV: 0,
+        conveyor: type === "conveyor" ? (Math.random() > 0.5 ? 1 : -1) : 0,
+        springPower: type === "spring" ? randRange(320, 380) : 0,
+      };
+      state.platforms.push(platform);
+      state.spawn.lastX = x;
+      state.spawn.lastType = type;
+      state.spawn.specialStreak = type === "normal" ? 0 : state.spawn.specialStreak + 1;
+    }
+
+    function applyInput(dt, grounded) {
+      const left = state.keys.has("ArrowLeft") || state.keys.has("KeyA");
+      const right = state.keys.has("ArrowRight") || state.keys.has("KeyD");
+      let dir = 0;
+      if (left) dir -= 1;
+      if (right) dir += 1;
+
+      const control = grounded ? 1 : state.player.airControl;
+      const target = dir * state.player.speed;
+      state.player.vx = lerp(state.player.vx, target, 0.18 * control);
+    }
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function update(dt) {
+      state.time += dt;
+
+      if (state.mode !== "playing") return;
+
+      const gravity = 700;
+      state.player.vy += gravity * dt;
+      if (state.player.vy > 900) state.player.vy = 900;
+
+      const wasY = state.player.y;
+      const wasX = state.player.x;
+
+      state.player.x += state.player.vx * dt;
+      state.player.y += state.player.vy * dt;
+
+      if (state.player.x < 0) {
+        state.player.x = 0;
+        state.player.vx = Math.max(0, state.player.vx);
+      }
+      if (state.player.x + state.player.w > WORLD.width) {
+        state.player.x = WORLD.width - state.player.w;
+        state.player.vx = Math.min(0, state.player.vx);
+      }
+
+      let grounded = false;
+      let groundedPlatform = null;
+      for (const p of state.platforms) {
+        if ((p.used && p.type === "fragile") || p.breaking) continue;
+        if (state.player.vy < 0 &&
+            state.player.x + state.player.w > p.x &&
+            state.player.x < p.x + p.w &&
+            wasY >= p.y + p.h &&
+            state.player.y <= p.y + p.h) {
+          state.player.y = p.y + p.h;
+          state.player.vy = 0;
+          break;
+        }
+        if (state.player.vy >= 0 &&
+            state.player.x + state.player.w > p.x &&
+            state.player.x < p.x + p.w &&
+            wasY + state.player.h <= p.y &&
+            state.player.y + state.player.h >= p.y &&
+            state.player.y < p.y + p.h) {
+          if (p.type === "spike") {
+            hurtPlayer();
+            state.player.vy = -120;
+            break;
+          }
+          if (p.type === "spring") {
+            state.player.y = p.y - state.player.h;
+            state.player.vy = -p.springPower;
+            playSfx("spring");
+            grounded = false;
+            break;
+          }
+
+          grounded = true;
+          groundedPlatform = p;
+          state.player.y = p.y - state.player.h;
+          state.player.vy = 0;
+          if (p.type === "fragile") {
+            p.used = true;
+            p.breaking = true;
+            p.breakTimer = 0.18;
+          }
+          if (p.type === "conveyor") {
+            const belt = p.conveyor * state.conveyorSpeed;
+            const nearLeft = state.player.x <= 2 && belt < 0;
+            const nearRight = state.player.x + state.player.w >= WORLD.width - 2 && belt > 0;
+            if (!nearLeft && !nearRight) {
+              state.player.x += belt * dt;
+              state.player.vx += belt * 0.15;
+            } else {
+              state.player.vx *= 0.2;
+            }
+          }
+          break;
+        }
+      }
+
+      const drift = state.scrollSpeed * dt;
+      for (const p of state.platforms) {
+        p.y -= drift;
+      }
+      state.scrollOffset += drift;
+      if (grounded && groundedPlatform) {
+        state.player.y -= drift;
+      }
+
+      applyInput(dt, grounded);
+
+      state.cameraY = Math.max(0, state.player.y - WORLD.height * 0.35 + state.scrollOffset);
+
+      state.spikeCeilingY = state.cameraY + state.spikeOffset;
+      const ceilingBottom = state.spikeCeilingY + 26;
+      if (state.player.y <= ceilingBottom) {
+        hurtPlayer();
+        state.player.y = ceilingBottom;
+        state.player.vy = Math.max(0, state.player.vy);
+      }
+
+      if (state.invuln > 0) {
+        state.invuln -= dt;
+        if (state.invuln < 0) state.invuln = 0;
+      }
+
+      const depth = Math.max(0, state.player.y - 60);
+      state.floor = Math.floor(depth / 120);
+
+      state.cameraY = Math.max(0, state.player.y - WORLD.height * 0.35 + state.scrollOffset * 0.6);
+      state.spikeCeilingY = state.cameraY + state.spikeOffset;
+
+      while (state.nextPlatformY < state.player.y + 800) {
+        spawnPlatform(state.nextPlatformY);
+        state.nextPlatformY += nextGap(state.nextPlatformY);
+      }
+
+      for (const p of state.platforms) {
+        if (p.breaking) {
+          p.breakTimer -= dt;
+          if (p.breakTimer <= 0) {
+            p.breaking = false;
+            p.fallV = 60;
+          }
+        }
+        if (p.fallV > 0) {
+          p.y += p.fallV * dt;
+          p.fallV += 680 * dt;
+        }
+      }
+
+      state.platforms = state.platforms.filter(p => p.y > state.cameraY - 240);
+      state.platforms = state.platforms.filter(p => p.y < state.cameraY + WORLD.height + 500);
+
+      if (state.player.y > state.cameraY + WORLD.height + 200) {
+        hurtPlayer();
+        state.player.y = state.cameraY + WORLD.height * 0.3;
+        state.player.vy = 0;
+      }
+    }
+
+    function hurtPlayer() {
+      if (state.invuln > 0) return;
+      state.lives -= 1;
+      state.invuln = state.invulnDuration;
+      playSfx("hurt");
+      if (state.lives <= 0) {
+        state.mode = "gameover";
+        playSfx("gameover");
+      }
+    }
+
+    function drawBackground() {
+      const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      g.addColorStop(0, "#1f2333");
+      g.addColorStop(0.6, "#0f1220");
+      g.addColorStop(1, "#07080f");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      ctx.globalAlpha = 0.2;
+      const starOffset = (state.scrollOffset * 20) % canvas.height;
+      for (let i = 0; i < 60; i++) {
+        const x = (i * 37) % canvas.width;
+        const y = ((i * 83) + starOffset) % canvas.height;
+        ctx.fillStyle = i % 3 === 0 ? "#5c6b8b" : "#9fb2d0";
+        ctx.fillRect(x, y, 1, 1);
+      }
+      ctx.restore();
+    }
+
+    function draw() {
+      drawBackground();
+
+      const scale = Math.min(canvas.width / WORLD.width, canvas.height / WORLD.height);
+      const offsetX = (canvas.width - WORLD.width * scale) / 2;
+      const offsetY = (canvas.height - WORLD.height * scale) / 2;
+
+      ctx.save();
+      ctx.translate(offsetX, offsetY);
+      ctx.scale(scale, scale);
+
+      ctx.fillStyle = "#0d111c";
+      ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+
+      const ceilingY = state.spikeCeilingY - state.cameraY;
+      ctx.fillStyle = "#7a1c1c";
+      ctx.fillRect(0, ceilingY, WORLD.width, 10);
+      ctx.fillStyle = "#ff7b7b";
+      for (let i = 0; i < WORLD.width; i += 16) {
+        ctx.beginPath();
+        ctx.moveTo(i, ceilingY + 10);
+        ctx.lineTo(i + 8, ceilingY + 26);
+        ctx.lineTo(i + 16, ceilingY + 10);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.fillStyle = "#3b0f10";
+      ctx.fillRect(0, ceilingY - 14, WORLD.width, 6);
+      ctx.fillStyle = "#2a0b0b";
+      ctx.fillRect(0, ceilingY + 24, WORLD.width, 2);
+
+      for (const p of state.platforms) {
+        if (p.used && p.type === "fragile" && p.fallV <= 0) continue;
+        const y = p.y - state.cameraY;
+        if (p.breaking) {
+          ctx.globalAlpha = 0.7;
+        } else {
+          ctx.globalAlpha = 1;
+        }
+        ctx.fillStyle = COLORS[p.type];
+        ctx.fillRect(p.x, y, p.w, p.h);
+        ctx.strokeStyle = "rgba(0,0,0,0.4)";
+        ctx.strokeRect(p.x, y, p.w, p.h);
+        ctx.globalAlpha = 1;
+        if (p.type === "conveyor") {
+          ctx.fillStyle = "rgba(0,0,0,0.35)";
+          for (let i = 8; i < p.w - 6; i += 16) {
+            ctx.beginPath();
+            if (p.conveyor > 0) {
+              ctx.moveTo(p.x + i, y + 4);
+              ctx.lineTo(p.x + i + 8, y + 6);
+              ctx.lineTo(p.x + i, y + 8);
+            } else {
+              ctx.moveTo(p.x + i + 8, y + 4);
+              ctx.lineTo(p.x + i, y + 6);
+              ctx.lineTo(p.x + i + 8, y + 8);
+            }
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+        if (p.type === "spike") {
+          ctx.fillStyle = "#1a1a1a";
+          const spikeTop = y - 6;
+          for (let i = 0; i < p.w; i += 10) {
+            ctx.beginPath();
+            ctx.moveTo(p.x + i, y);
+            ctx.lineTo(p.x + i + 5, spikeTop);
+            ctx.lineTo(p.x + i + 10, y);
+            ctx.fill();
+          }
+          ctx.fillStyle = "#851b1b";
+          ctx.fillRect(p.x, y + p.h - 2, p.w, 2);
+        }
+        if (p.type === "spring") {
+          ctx.fillStyle = "#0b3550";
+          ctx.fillRect(p.x + p.w * 0.35, y - 8, p.w * 0.3, 8);
+          ctx.strokeStyle = "#7bdcff";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          const left = p.x + p.w * 0.35;
+          const right = p.x + p.w * 0.65;
+          const top = y - 8;
+          ctx.moveTo(left, top);
+          ctx.lineTo(right, top + 4);
+          ctx.lineTo(left, top + 8);
+          ctx.stroke();
+          ctx.lineWidth = 1;
+        }
+      }
+
+      drawPlayerPixel(state.player.x, state.player.y - state.cameraY, state.player.w, state.player.h, state.invuln > 0);
+
+      ctx.restore();
+
+      if (state.mode === "title") {
+        drawCenteredText([
+          "NS-SHAFT",
+          "TRIBUTE",
+          "PRESS ENTER",
+          "ARROWS / A-D TO MOVE",
+          "F FULLSCREEN",
+        ], 0.42);
+      }
+      if (state.mode === "gameover") {
+        drawCenteredText([
+          "GAME OVER",
+          `FLOOR ${state.floor}`,
+          "PRESS R TO RESTART",
+        ], 0.5);
+      }
+
+      if (state.invuln > 0) {
+        ctx.save();
+        ctx.globalAlpha = Math.min(0.35, state.invuln * 0.35);
+        ctx.fillStyle = "#b93131";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+
+      updateHud();
+    }
+
+    function drawCenteredText(lines, anchor) {
+      ctx.save();
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#f6f1e6";
+      ctx.font = "22px \"Courier New\", monospace";
+      const startY = canvas.height * anchor;
+      lines.forEach((line, idx) => {
+        ctx.fillText(line, canvas.width / 2, startY + idx * 26);
+      });
+      ctx.restore();
+    }
+
+    function gameLoop(lastTime) {
+      return function tick(ts) {
+        const delta = (ts - lastTime) / 1000;
+        lastTime = ts;
+        if (!useExternalAdvance) {
+          const dt = Math.min(0.033, delta);
+          update(dt);
+          draw();
+        }
+        requestAnimationFrame(tick);
+      };
+    }
+
+    let useExternalAdvance = false;
+    window.advanceTime = (ms) => {
+      useExternalAdvance = true;
+      const steps = Math.max(1, Math.round(ms / (1000 / 60)));
+      for (let i = 0; i < steps; i++) update(1 / 60);
+      draw();
+    };
+
+    function renderGameToText() {
+      const payload = {
+        coordinateSystem: "origin top-left, +x right, +y down",
+        mode: state.mode,
+        player: {
+          x: round(state.player.x),
+          y: round(state.player.y),
+          w: state.player.w,
+          h: state.player.h,
+          vx: round(state.player.vx),
+          vy: round(state.player.vy),
+        },
+        lives: state.lives,
+        floor: state.floor,
+        spikeCeilingY: round(state.spikeCeilingY),
+        cameraY: round(state.cameraY),
+        platforms: state.platforms
+          .filter(p => !(p.used && p.type === "fragile" && p.fallV <= 0))
+          .map(p => ({
+            x: round(p.x),
+            y: round(p.y),
+            w: round(p.w),
+            h: p.h,
+            type: p.type,
+            conveyor: p.conveyor,
+            falling: p.fallV > 0,
+            springPower: p.springPower || 0,
+          })),
+      };
+      return JSON.stringify(payload);
+    }
+    window.render_game_to_text = renderGameToText;
+
+    function round(n) {
+      return Math.round(n * 10) / 10;
+    }
+
+    function updateHud() {
+      if (floorEl) floorEl.textContent = `FLOOR: ${state.floor}`;
+      if (hpFillEl) {
+        const ratio = Math.max(0, Math.min(1, state.lives / state.maxLives));
+        hpFillEl.style.width = `${Math.round(ratio * 100)}%`;
+        hpFillEl.style.background = ratio > 0.5 ? "#7bdcff" : ratio > 0.25 ? "#f2c14e" : "#ff6b6b";
+      }
+      if (heartsEl) {
+        heartsEl.innerHTML = "";
+        for (let i = 0; i < state.lives; i++) {
+          const heart = document.createElement("div");
+          heart.className = "heart";
+          heartsEl.appendChild(heart);
+        }
+      }
+    }
+
+    function drawPlayerPixel(x, y, w, h, hurt) {
+      const palette = {
+        skin: "#f6c7a5",
+        shirt: "#6aa6ff",
+        pants: "#3b4b6f",
+        hair: "#2a1c15",
+        hurt: "#ffd166",
+      };
+      const sprite = [
+        "  hh  ",
+        " hhhh ",
+        " hs sh",
+        " hssh ",
+        "  ss  ",
+        " sssss",
+        "  pp  ",
+        " p  p ",
+        " p  p ",
+        " p  p ",
+        " p  p ",
+        "      ",
+      ];
+      const cols = sprite[0].length;
+      const rows = sprite.length;
+      const px = w / cols;
+      const py = h / rows;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const ch = sprite[r][c];
+          if (ch === " ") continue;
+          let color = palette.shirt;
+          if (ch === "h") color = palette.hair;
+          if (ch === "s") color = palette.skin;
+          if (ch === "p") color = palette.pants;
+          if (hurt) color = palette.hurt;
+          ctx.fillStyle = color;
+          ctx.fillRect(x + c * px, y + r * py, Math.ceil(px), Math.ceil(py));
+        }
+      }
+      // No outline: keep sprite crisp.
+    }
+
+    function ensureAudio() {
+      if (state.sfx) return;
+      try {
+        state.sfx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (err) {
+        state.sfx = null;
+      }
+    }
+
+    function playSfx(kind) {
+      if (!state.sfx) return;
+      const ctx = state.sfx;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "square";
+      if (kind === "start") {
+        osc.frequency.value = 440;
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      } else if (kind === "hurt") {
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(110, now + 0.18);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } else if (kind === "spring") {
+        osc.frequency.setValueAtTime(520, now);
+        osc.frequency.exponentialRampToValueAtTime(760, now + 0.12);
+        gain.gain.setValueAtTime(0.09, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      } else if (kind === "gameover") {
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(90, now + 0.3);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      }
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function nextGap(y) {
+      const depth = Math.max(0, Math.floor((y - 60) / 120));
+      const base = depth < 4 ? randRange(70, 100) : randRange(80, 115);
+      const bonus = Math.min(18, depth * 1.2);
+      return base + bonus;
+    }
+
+    function choosePlatformType(depth) {
+      const roll = Math.random();
+      if (depth < 2) {
+        return roll < 0.75 ? "normal" : "fragile";
+      }
+      if (depth < 6) {
+        if (roll < 0.6) return "normal";
+        if (roll < 0.78) return "fragile";
+        if (roll < 0.9) return "conveyor";
+        if (roll < 0.96) return "spring";
+        return "spike";
+      }
+      if (roll < 0.55) return "normal";
+      if (roll < 0.74) return "fragile";
+      if (roll < 0.88) return "conveyor";
+      if (roll < 0.95) return "spring";
+      return "spike";
+    }
+
+    document.addEventListener("keydown", (e) => {
+      ensureAudio();
+      state.keys.add(e.code);
+      if (e.code === "Enter" && state.mode === "title") {
+        state.mode = "playing";
+        resetGame();
+        playSfx("start");
+      }
+      if (e.code === "KeyR" && state.mode === "gameover") {
+        state.mode = "playing";
+        resetGame();
+        playSfx("start");
+      }
+      if (e.code === "KeyF") {
+        toggleFullscreen();
+      }
+      if (e.code === "Escape" && document.fullscreenElement) {
+        document.exitFullscreen();
+      }
+    });
+
+    document.addEventListener("keyup", (e) => {
+      state.keys.delete(e.code);
+    });
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        canvas.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    resetGame();
+    requestAnimationFrame(gameLoop(performance.now()));
+  </script>
+</body>
+</html>
