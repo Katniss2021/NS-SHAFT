@@ -4,6 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>NS-SHAFT Tribute</title>
+  <meta name="theme-color" content="#0b0d14" />
+  <link rel="icon" href="logo.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="logo.png" />
+  <link rel="manifest" href="manifest.json" />
   <style>
     :root {
       color-scheme: light;
@@ -43,8 +47,8 @@
       flex-wrap: wrap;
     }
     #hud-logo {
-      width: 36px;
-      height: 36px;
+      width: clamp(40px, 9vw, 56px);
+      height: clamp(40px, 9vw, 56px);
       object-fit: contain;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
     }
@@ -146,7 +150,7 @@
         <div id="hearts"></div>
       </div>
       <div id="floor">FLOOR: 0</div>
-      <img id="hud-logo" src="logo.png" alt="Logo" />
+      <img id="hud-logo" src="logo.png?v=2" alt="Logo" />
     </div>
     <div id="game-box">
       <button id="start-btn" type="button">START</button>
