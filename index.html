@@ -31,6 +31,10 @@
       align-items: center;
       justify-content: center;
       overscroll-behavior: none;
+      -webkit-text-size-adjust: none;
+    }
+    body {
+      touch-action: none;
     }
     #wrap {
       width: 100%;
@@ -123,27 +127,25 @@
       touch-action: none;
     }
     #controls {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 6px;
+      width: min(680px, 96vw);
       display: flex;
       justify-content: space-between;
-      padding: 0 14px;
+      padding: 0 10px 8px 10px;
       pointer-events: none;
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
+      margin-top: 6px;
     }
     .ctrl-btn {
       pointer-events: auto;
-      width: 60px;
-      height: 60px;
+      width: 78px;
+      height: 78px;
       border-radius: 50%;
       background: var(--c-bg);
       border: 1px solid var(--c-fg);
       color: var(--c-fg);
-      font-size: 18px;
+      font-size: 22px;
       display: grid;
       place-items: center;
       user-select: none;
@@ -180,10 +182,10 @@
     <div id="game-box">
       <button id="start-btn" type="button">开始</button>
       <canvas id="game" width="480" height="640" aria-label="是男人就下100层"></canvas>
-      <div id="controls">
-        <button class="ctrl-btn" id="btn-left" type="button">◀</button>
-        <button class="ctrl-btn" id="btn-right" type="button">▶</button>
-      </div>
+    </div>
+    <div id="controls">
+      <button class="ctrl-btn" id="btn-left" type="button">◀</button>
+      <button class="ctrl-btn" id="btn-right" type="button">▶</button>
     </div>
   </div>
 
@@ -861,7 +863,7 @@
       }
     }
 
-    function drawPlayerPixel(x, y, w, h, pal) {
+    function drawPlayerPixel(x, y, w, h, pal, invert) {
       const sprite = [
         "   ####   ",
         "  ######  ",
@@ -880,11 +882,19 @@
       const rows = sprite.length;
       const px = w / cols;
       const py = h / rows;
+      if (invert) {
+        ctx.fillStyle = pal.fg;
+        ctx.fillRect(x, y, w, h);
+      }
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
           const ch = sprite[r][c];
           if (ch === " ") continue;
-          ctx.fillStyle = ch === "." ? pal.light : pal.fg;
+          if (invert) {
+            ctx.fillStyle = pal.bg;
+          } else {
+            ctx.fillStyle = ch === "." ? pal.light : pal.fg;
+          }
           ctx.fillRect(x + c * px, y + r * py, Math.ceil(px), Math.ceil(py));
         }
       }
@@ -912,7 +922,8 @@
         drawPlatform(p, pal);
       }
 
-      drawPlayerPixel(state.player.x, state.player.y - state.cameraY, state.player.w, state.player.h, pal);
+      const hurtFlash = state.invuln > 0 && Math.floor(state.clock * 12) % 2 === 0;
+      drawPlayerPixel(state.player.x, state.player.y - state.cameraY, state.player.w, state.player.h, pal, hurtFlash);
 
       ctx.restore();
     }
